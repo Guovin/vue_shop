@@ -69,7 +69,7 @@ export default {
       this.$refs.loginFormRef.validate(async valid => {
         // console.log(valid)
         if (!valid) return false
-        // 使用async await将premise转换为返回的数据，data:res只获取部分data数据
+        // 使用async await将premise转换为返回的数据，{ data: res }通过解构赋值用res重命名接收
         const { data: res } = await this.$http.post('login', this.loginForm)
         if (res.meta.status !== 200) return this.$message.error('登录失败')
         this.$message.success('登录成功')
