@@ -21,13 +21,13 @@
         <el-table-column type="expand">
           <template slot-scope="scope">
             <el-row
-              :class="['bdbottom',i1 == '0' ? 'bdtop':'']"
+              :class="['bdbottom',i1 == '0' ? 'bdtop':'','vcenter']"
               v-for="(item1,i1) in scope.row.children"
               :key="item1.id"
             >
               <!-- 渲染一级权限 -->
               <el-col :span="5">
-                <el-tag>{{item1.authName}}</el-tag>
+                <el-tag closable @close="removeRightById(scope.row,item1.id)">{{item1.authName}}</el-tag>
                 <i class="el-icon-arrow-right"></i>
               </el-col>
               <!-- 渲染二、三级权限 -->
@@ -36,15 +36,26 @@
                 <el-row
                   v-for="(item2,i2) in item1.children"
                   :key="item2.id"
-                  :class="[i2 == '0' ? '':'bdtop']"
+                  :class="[i2 == '0' ? '':'bdtop','vcenter']"
                 >
-                  <el-col>
-                    <el-tag type="success">
-                      {{item2.authName}}
-                      <i class="el-icon-arrow-right"></i>
-                    </el-tag>
+                  <el-col :span="6">
+                    <el-tag
+                      type="success"
+                      closable
+                      @close="removeRightById(scope.row,item2.id)"
+                    >{{item2.authName}}</el-tag>
+                    <i class="el-icon-arrow-right"></i>
                   </el-col>
-                  <el-col></el-col>
+                  <!-- 通过for循环渲染三级权限 -->
+                  <el-col :span="18">
+                    <el-tag
+                      type="warning"
+                      v-for="(item3) in item2.children"
+                      :key="item3.id"
+                      closable
+                      @close="removeRightById(scope.row,item3.id)"
+                    >{{item3.authName}}</el-tag>
+                  </el-col>
                 </el-row>
               </el-col>
             </el-row>
@@ -68,7 +79,12 @@
               icon="el-icon-delete"
               @click="deleRoleById(scope.row.id)"
             >删除</el-button>
-            <el-button size="mini" type="warning" icon="el-icon-setting">分配权限</el-button>
+            <el-button
+              size="mini"
+              type="warning"
+              icon="el-icon-setting"
+              @click="showSetRightDialog(scope.row)"
+            >分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -107,6 +123,31 @@
         <el-button type="primary" @click="editRoleInfo">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 分配权限对话框区域 -->
+    <el-dialog
+      title="分配权限"
+      :visible.sync="SetRightDialogVisible"
+      width="50%"
+      @close="setRightDialogClosed"
+    >
+      <!-- 内容主体区域 -->
+      <!-- 树形控件 -->
+      <el-tree
+        :data="rightsList"
+        :props="treeProps"
+        show-checkbox
+        node-key="id"
+        default-expand-all
+        :default-checked-keys="defaultKeys"
+        ref="treeRef"
+      ></el-tree>
+      <!-- 底部区域 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="SetRightDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="allotRights">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -141,8 +182,22 @@ export default {
         roleDesc: [
           { required: true, message: '请输入角色描述', trigger: 'blur' }, { min: 2, max: 15, message: '角色描述的长度在6~15个字符之间', trigger: 'blur' }
         ]
-      }
+      },
 
+      // 控制分配权限对话框显示
+      SetRightDialogVisible: false,
+      // 所有树形权限数据
+      rightsList: [],
+      // 树形控件绑定的对象
+      treeProps: {
+        label: 'authName',
+        children: 'children'
+      },
+      // 树形控件默认选中的节点id数组
+      defaultKeys: [],
+
+      // 即将分配权限的角色id
+      roleId: ''
     }
   },
   methods: {
@@ -238,6 +293,73 @@ export default {
       }
       this.$message.success('删除角色成功！')
       this.getRolesList()
+    },
+
+    // 根据id删除对应的权限
+    async removeRightById(role, rightId) {
+      const confirmResult = await this.$confirm('此操作将永久删除该角色, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).catch(err => err)
+
+      if (confirmResult !== 'confirm') {
+        return this.$message.info('取消了删除操作！')
+      }
+
+      const { data: res } = await this.$http.delete(`roles/${role.id}/rights/${rightId}`)
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除权限失败！')
+      }
+      this.$message.success('删除权限成功！')
+      role.children = res.data
+    },
+
+    // 展示分配权限对话框
+    async showSetRightDialog(role) {
+      this.roleId = role.id
+
+      const { data: res } = await this.$http.get('rights/tree')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取权限数据失败！')
+      }
+      this.rightsList = res.data
+      // 递归获取三级权限节点的id
+      this.getLeafKeys(role, this.defaultKeys)
+      this.SetRightDialogVisible = true
+    },
+
+    // 通过递归，获取该角色下所有三级权限的id并保存到defaultKeys中
+    getLeafKeys(node, arr) {
+      // 如果node节点不包含children属性，则是三级权限节点
+      if (!node.children) {
+        return arr.push(node.id)
+      }
+
+      node.children.forEach(item => {
+        this.getLeafKeys(item, arr)
+      })
+    },
+
+    // 监听权限分配对话框关闭事件
+    setRightDialogClosed() {
+      this.defaultKeys = []
+    },
+
+    async allotRights() {
+      const keys = [...this.$refs.treeRef.getCheckedKeys(),
+        ...this.$refs.treeRef.getHalfCheckedKeys()]
+
+      const strKeys = keys.join(',')
+
+      const { data: res } = await this.$http.post(`roles/${this.roleId}/rights`, { rids: strKeys })
+      if (res.meta.status !== 200) {
+        return this.$message.error('分配权限失败！')
+      }
+
+      this.$message.success('分配权限成功！')
+      this.getRolesList()
+      this.SetRightDialogVisible = false
     }
   },
   created() {
@@ -257,5 +379,10 @@ export default {
 
 .bdbottom{
   border-bottom: 1px solid #eee;
+}
+
+.vcenter{
+  display:flex;
+  align-items:center;
 }
 </style>
