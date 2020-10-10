@@ -10,9 +10,7 @@
     <el-card class="box-card">
       <el-row>
         <el-col>
-          <el-button type="primary" @click="setCateDialogVisible = true"
-            >添加分类</el-button
-          >
+          <el-button type="primary" @click="setCateDialog">添加分类</el-button>
         </el-col>
       </el-row>
       <!-- 表格 -->
@@ -85,7 +83,15 @@
           <el-form-item label="分类名称:" prop="cat_name">
             <el-input v-model="cateForm.cat_name"></el-input>
           </el-form-item>
-          <el-form-item label="父级分类:"> </el-form-item>
+          <el-form-item label="父级分类:">
+            <el-cascader
+              v-model="selectedKeys"
+              :options="parentCateList"
+              :props="cascaderProps"
+              @change="cascaderChange"
+              clearable
+            ></el-cascader>
+          </el-form-item>
         </el-form>
         <span slot="footer" class="dialog-footer">
           <el-button @click="setCateDialogVisible = false">取 消</el-button>
@@ -149,6 +155,19 @@ export default {
         cat_name: [
           { required: true, message: '请输入分类名称', trigger: 'blur' }
         ]
+      },
+
+      // 父级分类数据
+      parentCateList: [],
+      // 级联选择器保存选中的id数组
+      selectedKeys: [],
+      // 级联选择器显示的参数
+      cascaderProps: {
+        expandTrigger: 'hover',
+        value: 'cat_id',
+        label: 'cat_name',
+        children: 'children',
+        checkStrictly: true
       }
     }
   },
@@ -179,6 +198,30 @@ export default {
     handleCurrentChange(newNum) {
       this.queryInfo.pagenum = newNum
       this.getCateList()
+    },
+
+    // 监听添加分类点击事件
+    setCateDialog() {
+      this.getParentCateList()
+      this.setCateDialogVisible = true
+    },
+
+    // 获取父级分类数据列表
+    async getParentCateList() {
+      const { data: res } = await this.$http.get('categories', {
+        params: {
+          type: 2
+        }
+      })
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取父级分类数据失败！')
+      }
+
+      this.parentCateList = res.data
+    },
+
+    cascaderChange() {
+      console.log(this.selectedKeys)
     }
   },
 
@@ -191,5 +234,9 @@ export default {
 <style scoped>
 .table_tree {
   margin-top: 15px;
+}
+
+.el-cascader {
+  width: 100%;
 }
 </style>
