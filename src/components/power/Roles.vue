@@ -2,7 +2,7 @@
   <div>
     <!-- 面包屑导航区 -->
     <el-breadcrumb separator-class="el-icon-arrow-right">
-      <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>权限管理</el-breadcrumb-item>
       <el-breadcrumb-item>角色列表</el-breadcrumb-item>
     </el-breadcrumb>
@@ -11,7 +11,9 @@
       <!-- 添加角色按钮区域 -->
       <el-row>
         <el-col>
-          <el-button type="primary" @click="AddDialogVisible=true">添加角色</el-button>
+          <el-button type="primary" @click="AddDialogVisible = true"
+            >添加角色</el-button
+          >
         </el-col>
       </el-row>
 
@@ -21,40 +23,46 @@
         <el-table-column type="expand">
           <template slot-scope="scope">
             <el-row
-              :class="['bdbottom',i1 == '0' ? 'bdtop':'','vcenter']"
-              v-for="(item1,i1) in scope.row.children"
+              :class="['bdbottom', i1 == '0' ? 'bdtop' : '', 'vcenter']"
+              v-for="(item1, i1) in scope.row.children"
               :key="item1.id"
             >
               <!-- 渲染一级权限 -->
               <el-col :span="5">
-                <el-tag closable @close="removeRightById(scope.row,item1.id)">{{item1.authName}}</el-tag>
+                <el-tag
+                  closable
+                  @close="removeRightById(scope.row, item1.id)"
+                  >{{ item1.authName }}</el-tag
+                >
                 <i class="el-icon-arrow-right"></i>
               </el-col>
               <!-- 渲染二、三级权限 -->
               <el-col :span="19">
                 <!-- 通过for循环渲染二级权限 -->
                 <el-row
-                  v-for="(item2,i2) in item1.children"
+                  v-for="(item2, i2) in item1.children"
                   :key="item2.id"
-                  :class="[i2 == '0' ? '':'bdtop','vcenter']"
+                  :class="[i2 == '0' ? '' : 'bdtop', 'vcenter']"
                 >
                   <el-col :span="6">
                     <el-tag
                       type="success"
                       closable
-                      @close="removeRightById(scope.row,item2.id)"
-                    >{{item2.authName}}</el-tag>
+                      @close="removeRightById(scope.row, item2.id)"
+                      >{{ item2.authName }}</el-tag
+                    >
                     <i class="el-icon-arrow-right"></i>
                   </el-col>
                   <!-- 通过for循环渲染三级权限 -->
                   <el-col :span="18">
                     <el-tag
                       type="warning"
-                      v-for="(item3) in item2.children"
+                      v-for="item3 in item2.children"
                       :key="item3.id"
                       closable
-                      @close="removeRightById(scope.row,item3.id)"
-                    >{{item3.authName}}</el-tag>
+                      @close="removeRightById(scope.row, item3.id)"
+                      >{{ item3.authName }}</el-tag
+                    >
                   </el-col>
                 </el-row>
               </el-col>
@@ -72,28 +80,41 @@
               type="primary"
               icon="el-icon-edit"
               @click="showEditDialog(scope.row.id)"
-            >编辑</el-button>
+              >编辑</el-button
+            >
             <el-button
               size="mini"
               type="danger"
               icon="el-icon-delete"
               @click="deleRoleById(scope.row.id)"
-            >删除</el-button>
+              >删除</el-button
+            >
             <el-button
               size="mini"
               type="warning"
               icon="el-icon-setting"
               @click="showSetRightDialog(scope.row)"
-            >分配权限</el-button>
+              >分配权限</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
     <!-- 添加角色对话框区域 -->
-    <el-dialog title="添加角色" :visible.sync="AddDialogVisible" width="40%" @close="addFormClosed">
+    <el-dialog
+      title="添加角色"
+      :visible.sync="AddDialogVisible"
+      width="40%"
+      @close="addFormClosed"
+    >
       <!-- 内容主体区域 -->
-      <el-form :model="addForm" :rules="addFormrules" ref="addFormRef" label-width="80px">
+      <el-form
+        :model="addForm"
+        :rules="addFormrules"
+        ref="addFormRef"
+        label-width="80px"
+      >
         <el-form-item label="角色名称" prop="roleName">
           <el-input v-model="addForm.roleName"></el-input>
         </el-form-item>
@@ -109,8 +130,18 @@
     </el-dialog>
 
     <!-- 修改角色的对话框 -->
-    <el-dialog title="修改角色" :visible.sync="editDialogVisible" width="50%" @close="editDialogClosed">
-      <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="80px">
+    <el-dialog
+      title="修改角色"
+      :visible.sync="editDialogVisible"
+      width="50%"
+      @close="editDialogClosed"
+    >
+      <el-form
+        :model="editForm"
+        :rules="editFormRules"
+        ref="editFormRef"
+        label-width="80px"
+      >
         <el-form-item label="角色名称" prop="roleName">
           <el-input v-model="editForm.roleName"></el-input>
         </el-form-item>
@@ -165,8 +196,24 @@ export default {
       AddDialogVisible: false,
       // 添加用户表单规则
       addFormrules: {
-        roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }, { min: 2, max: 10, message: '角色名称的长度在2~10个字符之间', trigger: 'blur' }],
-        roleDesc: [{ required: true, message: '请输入角色描述', trigger: 'blur' }, { min: 2, max: 15, message: '角色描述的长度在6~15个字符之间', trigger: 'blur' }]
+        roleName: [
+          { required: true, message: '请输入角色名称', trigger: 'blur' },
+          {
+            min: 2,
+            max: 10,
+            message: '角色名称的长度在2~10个字符之间',
+            trigger: 'blur'
+          }
+        ],
+        roleDesc: [
+          { required: true, message: '请输入角色描述', trigger: 'blur' },
+          {
+            min: 2,
+            max: 15,
+            message: '角色描述的长度在6~15个字符之间',
+            trigger: 'blur'
+          }
+        ]
       },
 
       // 控制修改用户对话框的显示与隐藏
@@ -176,11 +223,22 @@ export default {
       // 修改用户表单的验证规则对象
       editFormRules: {
         roleName: [
-          { required: true, message: '请输入角色名称', trigger: 'blur' }, { min: 2, max: 10, message: '角色名称的长度在2~10个字符之间', trigger: 'blur' }
-
+          { required: true, message: '请输入角色名称', trigger: 'blur' },
+          {
+            min: 2,
+            max: 10,
+            message: '角色名称的长度在2~10个字符之间',
+            trigger: 'blur'
+          }
         ],
         roleDesc: [
-          { required: true, message: '请输入角色描述', trigger: 'blur' }, { min: 2, max: 15, message: '角色描述的长度在6~15个字符之间', trigger: 'blur' }
+          { required: true, message: '请输入角色描述', trigger: 'blur' },
+          {
+            min: 2,
+            max: 15,
+            message: '角色描述的长度在6~15个字符之间',
+            trigger: 'blur'
+          }
         ]
       },
 
@@ -254,10 +312,13 @@ export default {
         // console.log(valid)
         if (!valid) return false
         // 验证通过可以发起修改角色信息数据请求
-        const { data: res } = await this.$http.put('roles/' + this.editForm.roleId, {
-          roleName: this.editForm.roleName,
-          roleDesc: this.editForm.roleDesc
-        })
+        const { data: res } = await this.$http.put(
+          'roles/' + this.editForm.roleId,
+          {
+            roleName: this.editForm.roleName,
+            roleDesc: this.editForm.roleDesc
+          }
+        )
         if (res.meta.status !== 200) {
           return this.$message.error('更新角色信息失败！')
         }
@@ -273,11 +334,15 @@ export default {
 
     // 根据角色id删除角色
     async deleRoleById(id) {
-      const confirmResult = await this.$confirm('此操作将永久删除该角色, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).catch(err => err)
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该角色, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
 
       // console.log(confirmResult)
       // 点击确认返回的是confirm字符串
@@ -297,17 +362,23 @@ export default {
 
     // 根据id删除对应的权限
     async removeRightById(role, rightId) {
-      const confirmResult = await this.$confirm('此操作将永久删除该角色, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).catch(err => err)
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该角色, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
 
       if (confirmResult !== 'confirm') {
         return this.$message.info('取消了删除操作！')
       }
 
-      const { data: res } = await this.$http.delete(`roles/${role.id}/rights/${rightId}`)
+      const { data: res } = await this.$http.delete(
+        `roles/${role.id}/rights/${rightId}`
+      )
       if (res.meta.status !== 200) {
         return this.$message.error('删除权限失败！')
       }
@@ -347,12 +418,17 @@ export default {
     },
 
     async allotRights() {
-      const keys = [...this.$refs.treeRef.getCheckedKeys(),
-        ...this.$refs.treeRef.getHalfCheckedKeys()]
+      const keys = [
+        ...this.$refs.treeRef.getCheckedKeys(),
+        ...this.$refs.treeRef.getHalfCheckedKeys()
+      ]
 
       const strKeys = keys.join(',')
 
-      const { data: res } = await this.$http.post(`roles/${this.roleId}/rights`, { rids: strKeys })
+      const { data: res } = await this.$http.post(
+        `roles/${this.roleId}/rights`,
+        { rids: strKeys }
+      )
       if (res.meta.status !== 200) {
         return this.$message.error('分配权限失败！')
       }
@@ -369,20 +445,20 @@ export default {
 </script>
 
 <style scoped>
-.el-tag{
-  margin:7px
+.el-tag {
+  margin: 7px;
 }
 
-.bdtop{
+.bdtop {
   border-top: 1px solid #eee;
 }
 
-.bdbottom{
+.bdbottom {
   border-bottom: 1px solid #eee;
 }
 
-.vcenter{
-  display:flex;
-  align-items:center;
+.vcenter {
+  display: flex;
+  align-items: center;
 }
 </style>

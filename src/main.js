@@ -6,6 +6,8 @@ import './plugins/element.js'
 import './assets/css/global.css'
 // 引入字体图标样式
 import './assets/fonts/iconfont.css'
+// 引入第三方树形表格依赖
+import TableTree from 'vue-table-with-tree-grid'
 
 import axios from 'axios'
 
@@ -23,6 +25,8 @@ axios.interceptors.request.use(config => {
 Vue.prototype.$http = axios
 
 Vue.config.productionTip = false
+
+Vue.component('table-tree', TableTree)
 
 new Vue({
   router,
