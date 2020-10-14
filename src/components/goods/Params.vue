@@ -50,6 +50,7 @@
                   v-for="(item, i) in scope.row.attr_vals"
                   :key="i"
                   closable
+                  @close="deleteParamsTag(i, scope.row)"
                   >{{ item }}</el-tag
                 >
                 <!-- 输入文本框 -->
@@ -59,8 +60,8 @@
                   v-model="scope.row.inputValue"
                   ref="saveTagInput"
                   size="small"
-                  @keyup.enter.native="handleInputConfirm"
-                  @blur="handleInputConfirm"
+                  @keyup.enter.native="handleInputConfirm(scope.row)"
+                  @blur="handleInputConfirm(scope.row)"
                 >
                 </el-input>
                 <!-- 添加按钮 -->
@@ -112,6 +113,7 @@
                   v-for="(item, i) in scope.row.attr_vals"
                   :key="i"
                   closable
+                  @close="deleteParamsTag(i, scope.row)"
                   >{{ item }}</el-tag
                 >
                 <!-- 输入文本框 -->
@@ -121,8 +123,8 @@
                   v-model="scope.row.inputValue"
                   ref="saveTagInput"
                   size="small"
-                  @keyup.enter.native="handleInputConfirm"
-                  @blur="handleInputConfirm"
+                  @keyup.enter.native="handleInputConfirm(scope.row)"
+                  @blur="handleInputConfirm(scope.row)"
                 >
                 </el-input>
                 <!-- 添加按钮 -->
@@ -277,6 +279,8 @@ export default {
       // 如果选中的数组长度不等于3则清空选中数组直接返回
       if (this.cateSelectedKeys.length !== 3) {
         this.cateSelectedKeys = []
+        this.manyTableData = []
+        this.onlyTableData = []
         return false
       }
       this.getParamsData()
@@ -289,7 +293,7 @@ export default {
     async getParamsData() {
       // 根据选中分类id与标签名称获取参数列表
       const { data: res } = await this.$http.get(
-        `categories/${this.catId}/attributes`,
+        `categories/${this.cateId}/attributes`,
         {
           params: {
             sel: this.activeName
@@ -326,7 +330,7 @@ export default {
           return false
         }
         const { data: res } = await this.$http.post(
-          `categories/${this.catId}/attributes`,
+          `categories/${this.cateId}/attributes`,
           {
             attr_name: this.addForm.attr_name,
             attr_sel: this.activeName
@@ -359,7 +363,7 @@ export default {
           return false
         }
         const { data: res } = await this.$http.put(
-          `categories/${this.catId}/attributes/${this.editForm.attrId}`,
+          `categories/${this.cateId}/attributes/${this.editForm.attrId}`,
           {
             attr_name: this.editForm.attr_name,
             attr_sel: this.activeName
@@ -387,7 +391,7 @@ export default {
       ).catch(err => err)
       if (confirmResult === 'confirm') {
         const { data: res } = await this.$http.delete(
-          `categories/${this.catId}/attributes/${attrId}`
+          `categories/${this.cateId}/attributes/${attrId}`
         )
         if (res.meta.status !== 200) {
           return this.$message.error('删除失败！')
@@ -400,8 +404,35 @@ export default {
     },
 
     // 标签输入文本框触发事件
-    handleInputConfirm() {
-      console.log('ok')
+    async handleInputConfirm(row) {
+      if (row.inputValue.trim().length === 0) {
+        row.inputValue = ''
+        row.inputVisible = false
+        return false
+      }
+      // 如果没有return，则表示内容合法,添加该内容
+      row.attr_vals.push(row.inputValue.trim())
+      row.inputValue = ''
+      row.inputVisible = false
+      // 发起请求，保存这次操作
+      this.saveParamsTag(row)
+    },
+
+    // 保存参数/属性标签至数据库
+    async saveParamsTag(row) {
+      const { data: res } = await this.$http.put(
+        `categories/${this.cateId}/attributes/${row.attr_id}`,
+        {
+          attr_name: row.attr_name,
+          attr_sel: row.attr_sel,
+          attr_vals: row.attr_vals.join(' ')
+        }
+      )
+
+      if (res.meta.status !== 200) {
+        return this.$message.error('修改失败！')
+      }
+      this.$message.success('修改成功！')
     },
 
     // 标签添加按钮触发事件
@@ -412,6 +443,13 @@ export default {
       this.$nextTick(_ => {
         this.$refs.saveTagInput.$refs.input.focus()
       })
+    },
+
+    // 删除参数/属性标签触发事件
+    deleteParamsTag(i, row) {
+      // 从数组中删除索引为i的1项
+      row.attr_vals.splice(i, 1)
+      this.saveParamsTag(row)
     }
   },
   created() {
@@ -426,7 +464,7 @@ export default {
       }
     },
     // 获取当前级联选择器选中的id
-    catId() {
+    cateId() {
       if (this.cateSelectedKeys.length === 3) {
         return this.cateSelectedKeys[2]
       }
