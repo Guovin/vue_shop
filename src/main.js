@@ -21,6 +21,19 @@ axios.interceptors.request.use(config => {
   return config // 在最后必须return config
 })
 
+// 时间过滤器
+Vue.filter('dateFormat', function(originVal) {
+  const dt = new Date(originVal)
+  const y = dt.getFullYear()
+  const m = (dt.getMonth() + 1 + '').padStart(2, '0')
+  const d = (dt.getDate() + '').padStart(2, '0')
+  const hh = (dt.getHours() + '').padStart(2, '0')
+  const mm = (dt.getMinutes() + '').padStart(2, '0')
+  const ss = (dt.getSeconds() + '').padStart(2, '0')
+
+  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`
+})
+
 // 将axios挂载到http原型对象上使用
 Vue.prototype.$http = axios
 
