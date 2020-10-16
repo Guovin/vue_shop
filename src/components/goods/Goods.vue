@@ -16,7 +16,7 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary">添加商品</el-button>
+          <el-button type="primary" @click="addGoods">添加商品</el-button>
         </el-col>
       </el-row>
       <!-- 商品表格区域 -->
@@ -111,6 +111,11 @@ export default {
         this.$message.success('删除成功！')
         this.getGoodsList()
       } else { this.$message.info('取消了删除操作！') }
+    },
+
+    // 跳转添加商品导航
+    addGoods() {
+      this.$router.push('goods/add')
     }
   },
   created() {
