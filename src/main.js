@@ -11,6 +11,15 @@ import TableTree from 'vue-table-with-tree-grid'
 
 import axios from 'axios'
 
+// 引入富文本编辑器
+import VueQuillEditor from 'vue-quill-editor'
+// 富文本编辑器样式表
+import 'quill/dist/quill.core.css' // import styles
+import 'quill/dist/quill.snow.css' // for snow theme
+import 'quill/dist/quill.bubble.css' // for bubble theme
+
+Vue.use(VueQuillEditor)
+
 // 绑定axios默认访问地址
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
 
