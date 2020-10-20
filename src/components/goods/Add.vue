@@ -8,20 +8,9 @@
     </el-breadcrumb>
     <!-- 卡片视图区 -->
     <el-card>
-      <el-alert
-        title="添加商品信息"
-        type="info"
-        center
-        show-icon
-        :closable="false"
-      ></el-alert>
+      <el-alert title="添加商品信息" type="info" center show-icon :closable="false"></el-alert>
       <!-- 步骤条 -->
-      <el-steps
-        :space="200"
-        :active="activeIndex - 0"
-        finish-status="success"
-        align-center
-      >
+      <el-steps :space="200" :active="activeIndex - 0" finish-status="success" align-center>
         <el-step title="基本信息"></el-step>
         <el-step title="商品参数"></el-step>
         <el-step title="商品属性"></el-step>
@@ -33,7 +22,7 @@
       <el-form
         :model="addForm"
         :rules="addFormrules"
-        ref="ruleForm"
+        ref="addFormRef"
         label-width="100px"
         label-position="top"
       >
@@ -45,31 +34,16 @@
         >
           <el-tab-pane label="基本信息" name="0">
             <el-form-item label="商品名称" prop="goods_name">
-              <el-input
-                v-model="addForm.goods_name"
-                placeholder="商品名称"
-              ></el-input>
+              <el-input v-model="addForm.goods_name" placeholder="商品名称"></el-input>
             </el-form-item>
             <el-form-item label="商品价格" prop="goods_price">
-              <el-input
-                v-model="addForm.goods_price"
-                placeholder="商品价格"
-                type="number"
-              ></el-input>
+              <el-input v-model="addForm.goods_price" placeholder="商品价格" type="number"></el-input>
             </el-form-item>
             <el-form-item label="商品数量" prop="goods_number">
-              <el-input
-                v-model="addForm.goods_number"
-                placeholder="商品数量"
-                type="number"
-              ></el-input>
+              <el-input v-model="addForm.goods_number" placeholder="商品数量" type="number"></el-input>
             </el-form-item>
             <el-form-item label="商品重量" prop="goods_weight">
-              <el-input
-                v-model="addForm.goods_weight"
-                placeholder="商品重量"
-                type="number"
-              ></el-input>
+              <el-input v-model="addForm.goods_weight" placeholder="商品重量" type="number"></el-input>
             </el-form-item>
             <el-form-item label="商品分类" prop="goods_cat">
               <el-cascader
@@ -82,28 +56,15 @@
           </el-tab-pane>
           <el-tab-pane label="商品参数" name="1">
             <!-- 渲染表单item项 -->
-            <el-form-item
-              v-for="item in manyTabData"
-              :key="item.attr_id"
-              :label="item.attr_name"
-            >
+            <el-form-item v-for="item in manyTabData" :key="item.attr_id" :label="item.attr_name">
               <!-- 复选框组 -->
               <el-checkbox-group v-model="item.attr_vals">
-                <el-checkbox
-                  :label="cb"
-                  v-for="(cb, i) in item.attr_vals"
-                  :key="i"
-                  border
-                ></el-checkbox>
+                <el-checkbox :label="cb" v-for="(cb, i) in item.attr_vals" :key="i" border></el-checkbox>
               </el-checkbox-group>
             </el-form-item>
           </el-tab-pane>
           <el-tab-pane label="商品属性" name="2">
-            <el-form-item
-              :label="item.attr_name"
-              v-for="item in onlyTabData"
-              :key="item.attr_id"
-            >
+            <el-form-item :label="item.attr_name" v-for="item in onlyTabData" :key="item.attr_id">
               <el-input v-model="item.attr_vals"></el-input>
             </el-form-item>
           </el-tab-pane>
@@ -122,23 +83,21 @@
           </el-tab-pane>
           <el-tab-pane label="商品内容" name="4">
             <quill-editor v-model="addForm.goods_introduce"></quill-editor>
-            <el-button type="primary" class="addBtn">添加商品</el-button>
+            <el-button type="primary" class="addBtn" @click="add">添加商品</el-button>
           </el-tab-pane>
         </el-tabs>
       </el-form>
     </el-card>
     <!-- 图片预览对话框 -->
-    <el-dialog
-      title="图片预览"
-      :visible.sync="previewDialogVisible"
-      width="50%"
-    >
+    <el-dialog title="图片预览" :visible.sync="previewDialogVisible" width="50%">
       <img :src="previewPath" alt class="previewImg" />
     </el-dialog>
   </div>
 </template>
 
 <script>
+// 引入提供深拷贝功能的lodash
+import _ from 'lodash'
 export default {
   data() {
     return {
@@ -147,15 +106,17 @@ export default {
       // 商品基本信息
       addForm: {
         goods_name: '',
-        goods_price: 0,
-        goods_number: 0,
-        goods_weight: 0,
+        goods_price: '0',
+        goods_number: '0',
+        goods_weight: '0',
         // 商品所属的分类数组
         goods_cat: [],
         // 图片数组
         pics: [],
         // 富文本编辑器内容
-        goods_introduce: ''
+        goods_introduce: '',
+        // 参数和属性列表
+        attrs: []
       },
       // 商品分类数据列表
       cateList: [],
@@ -275,7 +236,6 @@ export default {
       const i = this.addForm.pics.findIndex(x => x.pic === filePath)
       // 调用数组的splice方法将图片信息对象从pics中删除
       this.addForm.pics.splice(i, 1)
-      console.log(this.addForm)
     },
     // 监听图片上传成功触发事件
     handleSuccess(response) {
@@ -283,6 +243,43 @@ export default {
       const picInfo = { pic: response.data.tmp_path }
       // 添加图片对象到添加数组表单中
       this.addForm.pics.push(picInfo)
+    },
+
+    // 添加商品
+    add() {
+      this.$refs.addFormRef.validate(async valid => {
+        if (!valid) {
+          return this.$message.error('请填写必要的表中项！')
+        }
+        // 使用深拷贝避免与级联选择器冲突报错
+        const form = _.cloneDeep(this.addForm)
+        form.goods_cat = form.goods_cat.join(',')
+        // 处理动态参数
+        this.manyTabData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_vals: item.attr_vals.join(' ')
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        // 处理静态属性
+        this.onlyTabData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_vals: item.attr_vals
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        // 与深拷贝内容同步修改
+        form.attrs = this.addForm.attrs
+        // 发起添加商品请求
+        const { data: res } = await this.$http.post('goods', form)
+        if (res.meta.status !== 201) {
+          return this.$message.error(res.meta.msg)
+        }
+        this.$message.success('添加商品成功！')
+        this.$router.push('/goods')
+      })
     }
   },
 

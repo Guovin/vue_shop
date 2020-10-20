@@ -81,7 +81,7 @@ export default {
       }
       this.goodsList = res.data.goods
       this.total = res.data.total
-      console.log(this.goodsList)
+      // console.log(this.goodsList)
     },
 
     // 分页显示条数改变触发事件
