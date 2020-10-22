@@ -15,6 +15,8 @@ module.exports = {
       }
     ],
     // 发布项目时的插件数组，使用展开运算符，将数组内容拆分出来
-    ...proPlugins
+    ...proPlugins,
+    // 路由懒加载
+    '@babel/plugin-syntax-dynamic-import'
   ]
 }

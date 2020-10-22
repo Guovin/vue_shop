@@ -7,6 +7,7 @@ module.exports = {
         .clear()
         .add('./src/main-prod.js')
 
+      // 配置CDN加载项
       config.set('externals', {
         vue: 'Vue',
         'vue-router': 'VueRouter',
@@ -16,6 +17,11 @@ module.exports = {
         nprogress: 'NProgress',
         'vue-quill-editor': 'VueQuillEditor'
       })
+      // 新建一个isProd属性，处理不同环境的配置
+      config.plugin('html').tap(args => {
+        args[0].isProd = true
+        return args
+      })
     })
 
     // 开发模式
@@ -24,6 +30,12 @@ module.exports = {
         .entry('app')
         .clear()
         .add('./src/main-dev.js')
+
+      // 新建一个isProd属性，处理不同环境的配置
+      config.plugin('html').tap(args => {
+        args[0].isProd = false
+        return args
+      })
     })
   }
 }
